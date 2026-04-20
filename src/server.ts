@@ -57,8 +57,14 @@ app.get('/', (_req, res) => {
       },
       'GET /health': {},
     },
+    config: {
+      ARGOS_PYTHON:
+        'Comando Python (default: python3 em Unix, python em Windows).',
+      setup:
+        'Instale Argos: pip install -r requirements-argos.txt; depois argospm install translate-en_pt translate-pt_en translate-en_ja translate-ja_en (e outros pares se precisar).',
+    },
     note:
-      'Tradução no servidor com modelo local (Transformers.js + M2M100 418M). Idiomas: inglês, português e japonês. Sem APIs de terceiros.',
+      'Tradução offline via Argos Translate (Python, subprocesso — sem API HTTP). Deteção: franc (en, pt, ja).',
   })
 })
 

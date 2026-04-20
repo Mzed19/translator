@@ -1,0 +1,9 @@
+# Argos Translate (offline, sem API HTTP)
+# Instalação:
+#   python3 -m venv .venv && .venv\Scripts\activate  # Windows: .venv\Scripts\activate
+#   pip install -r requirements-argos.txt
+# Pacotes de tradução (en, pt, ja — ajuste se pivot via en não bastar):
+#   argospm update
+#   argospm install translate-en_pt translate-pt_en translate-en_ja translate-ja_en
+#
+argostranslate>=1.9

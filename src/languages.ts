@@ -22,11 +22,6 @@ export function francCodeFor(api: ApiLang): string {
   return FRANC_CODES[api]
 }
 
-/** Códigos ISO 639-1 para M2M100 (iguais aos da API). */
-export function m2m100LangCode(api: ApiLang): string {
-  return api
-}
-
 /** Converte código ISO 639-3 do franc para código da API. */
 export function apiLangFromFranc(franc3: string): ApiLang | null {
   return FRANC_TO_API.get(franc3) ?? null

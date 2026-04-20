@@ -1,26 +1,87 @@
-import { pipeline } from '@xenova/transformers'
+import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 import { franc } from 'franc'
-import { type ApiLang, apiLangFromFranc, m2m100LangCode } from './languages.js'
-
-/** M2M100 418M (ONNX): bem mais leve que NLLB 600M; cobre en, pt, ja entre outros. */
-const MODEL_ID = 'Xenova/m2m100_418M'
+import { type ApiLang, apiLangFromFranc } from './languages.js'
 
 const FRANC_ONLY = ['eng', 'por', 'jpn'] as const
 
-type M2mTranslator = (
+function argosPython(): string {
+  const e = process.env.ARGOS_PYTHON?.trim()
+  if (e) return e
+  return process.platform === 'win32' ? 'python' : 'python3'
+}
+
+function argosScriptPath(): string {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  return path.join(here, '..', 'scripts', 'argos_translate.py')
+}
+
+type ArgosOut = { translated?: string; error?: string }
+
+async function runArgosTranslate(
   text: string,
-  opts: { src_lang: string; tgt_lang: string },
-) => Promise<{ translation_text: string }[]>
+  from: ApiLang,
+  to: ApiLang,
+): Promise<string> {
+  const py = argosPython()
+  const script = argosScriptPath()
+  const payload = JSON.stringify({ text, from, to })
 
-let translatorPromise: Promise<M2mTranslator> | null = null
+  return new Promise((resolve, reject) => {
+    const child = spawn(py, [script], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
 
-async function getTranslator(): Promise<M2mTranslator> {
-  if (!translatorPromise) {
-    translatorPromise = pipeline('translation', MODEL_ID).then(
-      (p) => p as unknown as M2mTranslator,
-    )
-  }
-  return translatorPromise
+    let out = ''
+    let err = ''
+    child.stdout.setEncoding('utf8')
+    child.stderr.setEncoding('utf8')
+    child.stdout.on('data', (c: string) => {
+      out += c
+    })
+    child.stderr.on('data', (c: string) => {
+      err += c
+    })
+    child.on('error', (e) => {
+      reject(
+        new Error(
+          `Não foi possível executar Python (${py}). Defina ARGOS_PYTHON ou instale Python 3. Detalhe: ${e instanceof Error ? e.message : String(e)}`,
+        ),
+      )
+    })
+    child.on('close', (code) => {
+      let data: ArgosOut
+      try {
+        data = JSON.parse(out.trim() || '{}') as ArgosOut
+      } catch {
+        reject(
+          new Error(
+            err.trim() ||
+              out.trim() ||
+              `Argos: resposta inválida (código ${code ?? '?'})`,
+          ),
+        )
+        return
+      }
+      if (typeof data.error === 'string' && data.error) {
+        reject(new Error(data.error))
+        return
+      }
+      if (typeof data.translated === 'string') {
+        resolve(data.translated)
+        return
+      }
+      reject(
+        new Error(
+          err.trim() || `Argos terminou com código ${code} e sem tradução.`,
+        ),
+      )
+    })
+    child.stdin.write(payload, 'utf8')
+    child.stdin.end()
+  })
 }
 
 export function detectSourceLang(text: string): ApiLang | null {
@@ -49,30 +110,43 @@ export async function translateText(
     return { translated: '', detected: null }
   }
 
-  const tgt = m2m100LangCode(target)
-
   if (detected === target) {
     return { translated: trimmed, detected }
   }
 
-  const src = m2m100LangCode(detected)
-  const translator = await getTranslator()
-
-  const out = await translator(trimmed, {
-    src_lang: src,
-    tgt_lang: tgt,
-  })
-
-  const first = Array.isArray(out) ? out[0] : out
-  const translated =
-    first && typeof first === 'object' && 'translation_text' in first
-      ? String((first as { translation_text: string }).translation_text)
-      : trimmed
-
+  const translated = await runArgosTranslate(trimmed, detected, target)
   return { translated, detected }
 }
 
-/** Só para testes / warm-up: carrega o modelo. */
+/** Verifica se Python e argostranslate estão importáveis. */
 export async function preloadModel(): Promise<void> {
-  await getTranslator()
+  const py = argosPython()
+  await new Promise<void>((resolve, reject) => {
+    const c = spawn(py, ['-c', 'import argostranslate.translate'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
+    let err = ''
+    c.stderr.setEncoding('utf8')
+    c.stderr.on('data', (d: string) => {
+      err += d
+    })
+    c.on('error', (e) => {
+      reject(
+        new Error(
+          `Python (${py}) não encontrado ou erro ao executar. Defina ARGOS_PYTHON. ${e instanceof Error ? e.message : String(e)}`,
+        ),
+      )
+    })
+    c.on('close', (code) => {
+      if (code === 0) resolve()
+      else
+        reject(
+          new Error(
+            err.trim() ||
+              'Pacote argostranslate não encontrado. Rode: pip install -r requirements-argos.txt',
+          ),
+        )
+    })
+  })
 }
