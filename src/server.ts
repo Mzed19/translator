@@ -51,14 +51,14 @@ app.get('/', (_req, res) => {
         },
         response: {
           translated: 'string',
-          detected: 'en | pt | ru | de | es | fr | null',
+          detected: 'en | pt | ja | null',
           target: 'string',
         },
       },
       'GET /health': {},
     },
     note:
-      'Tradução roda no servidor com modelo local (Transformers.js + NLLB). Sem APIs de tradução de terceiros.',
+      'Tradução no servidor com modelo local (Transformers.js + M2M100 418M). Idiomas: inglês, português e japonês. Sem APIs de terceiros.',
   })
 })
 
