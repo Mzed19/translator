@@ -2,8 +2,10 @@
 # Instalação:
 #   python3 -m venv .venv && .venv\Scripts\activate  # Windows: .venv\Scripts\activate
 #   pip install -r requirements-argos.txt
-# Pacotes de tradução (en, pt, ja — ajuste se pivot via en não bastar):
+# Pacotes para en / pt / ja (direto + pivot via inglês pt<->ja):
 #   argospm update
 #   argospm install translate-en_pt translate-pt_en translate-en_ja translate-ja_en
+# Se pt<->ja ainda falhar, tente também (se existirem no índice):
+#   argospm install translate-pt_ja translate-ja_pt
 #
 argostranslate>=1.9
