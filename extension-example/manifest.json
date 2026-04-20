@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Exemplo cliente da Translator API",
+  "version": "1.0.0",
+  "description": "Chama a API local de tradução (npm run dev na raiz do repo).",
+  "action": {
+    "default_title": "Traduzir",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": ["http://localhost:8787/*"]
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tradutor</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        width: 320px;
+        padding: 12px;
+        margin: 0;
+      }
+      label {
+        display: block;
+        margin-top: 8px;
+        font-size: 12px;
+      }
+      textarea,
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 4px;
+      }
+      textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+      button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 8px;
+      }
+      #out {
+        margin-top: 12px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .err {
+        color: #b00020;
+      }
+    </style>
+  </head>
+  <body>
+    <label>Texto</label>
+    <textarea id="text" placeholder="Digite o texto…"></textarea>
+    <label>Traduzir para</label>
+    <select id="target">
+      <option value="en">Inglês</option>
+      <option value="pt" selected>Português</option>
+      <option value="ru">Russo</option>
+      <option value="de">Alemão</option>
+      <option value="es">Espanhol</option>
+      <option value="fr">Francês</option>
+    </select>
+    <button type="button" id="go">Traduzir</button>
+    <div id="out"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>
